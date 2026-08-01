@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  LayoutDashboard, 
+    LayoutDashboard, 
   ClipboardCheck, 
   Music, 
   CalendarDays, 
@@ -10,7 +10,9 @@ import {
   Users, 
   LogOut, 
   Activity,
-  HeartPulse
+  HeartPulse,
+  Waves,
+  BookOpen
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -23,8 +25,10 @@ export const Sidebar: React.FC = () => {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/assessment', label: 'Assessment Wizard', icon: ClipboardCheck },
     { to: '/therapy', label: 'Sound Therapy', icon: Music },
+    { to: '/masker', label: 'Ambient Masker', icon: Waves },
     { to: '/logs', label: 'Daily Tracking', icon: CalendarDays },
     { to: '/chat', label: 'AI Counseling Chat', icon: MessageSquare },
+    { to: '/knowledge', label: 'Knowledge Hub', icon: BookOpen },
   ];
 
   const doctorLinks = [
