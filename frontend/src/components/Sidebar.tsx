@@ -11,7 +11,6 @@ import {
   LogOut, 
   Activity,
   HeartPulse,
-  Waves,
   BookOpen,
   ClipboardList,
   Award
@@ -29,7 +28,6 @@ export const Sidebar: React.FC = () => {
     { to: '/assessment-studio', label: 'AI Assessment Studio', icon: ClipboardList },
     { to: '/rehab', label: 'Rehabilitation Plan', icon: Award },
     { to: '/therapy', label: 'Sound Therapy', icon: Music },
-    { to: '/masker', label: 'Ambient Masker', icon: Waves },
     { to: '/logs', label: 'Daily Tracking', icon: CalendarDays },
     { to: '/chat', label: 'AI Counseling Chat', icon: MessageSquare },
     { to: '/knowledge', label: 'Knowledge Hub', icon: BookOpen },

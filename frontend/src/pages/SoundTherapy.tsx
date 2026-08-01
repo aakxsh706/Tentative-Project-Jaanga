@@ -13,7 +13,9 @@ import {
   RefreshCw,
   Ear,
   PlusCircle,
-  Sparkles
+  Sparkles,
+  Timer,
+  Sliders
 } from 'lucide-react';
 
 export const SoundTherapy: React.FC = () => {
@@ -26,14 +28,21 @@ export const SoundTherapy: React.FC = () => {
   const [volume, setVolume] = useState(50);
   const [latestAssessment, setLatestAssessment] = useState<any>(null);
   
+  // Sleep Timer & Calibration States
+  const [pitchFreq, setPitchFreq] = useState(6000);
+  const [timerMinutes, setTimerMinutes] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  
   // Timer tracking
   const [sessionSeconds, setSessionSeconds] = useState(0);
   const timerRef = useRef<number | null>(null);
+  const timerIntervalRef = useRef<any>(null);
 
   // Audio Context refs for real-time synthesis
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const filterNodeRef = useRef<BiquadFilterNode | null>(null);
 
   const fetchSounds = async () => {
     try {
@@ -48,6 +57,9 @@ export const SoundTherapy: React.FC = () => {
         setLatestAssessment(assessRes.data);
         if (assessRes.data.sound_matching?.matched_volume_db) {
           setVolume(assessRes.data.sound_matching.matched_volume_db);
+        }
+        if (assessRes.data.sound_matching?.matched_frequency_hz) {
+          setPitchFreq(assessRes.data.sound_matching.matched_frequency_hz);
         }
       }
 
@@ -172,13 +184,13 @@ export const SoundTherapy: React.FC = () => {
 
       const filter = ctx.createBiquadFilter();
       filter.type = 'bandpass';
-      const targetFreq = latestAssessment?.sound_matching?.matched_frequency_hz || 6000;
-      filter.frequency.setValueAtTime(targetFreq, ctx.currentTime);
+      filter.frequency.setValueAtTime(pitchFreq, ctx.currentTime);
       filter.Q.setValueAtTime(8.0, ctx.currentTime); // narrow band
 
       noiseNode.connect(filter);
       filter.connect(gainNode);
       sourceNodeRef.current = noiseNode;
+      filterNodeRef.current = filter;
     }
     else if (audioUrl === 'synth:white') {
       const bufferSize = 2 * ctx.sampleRate;
@@ -309,8 +321,55 @@ export const SoundTherapy: React.FC = () => {
       } catch (e) {}
       sourceNodeRef.current = null;
     }
+    if (filterNodeRef.current) {
+      filterNodeRef.current.disconnect();
+      filterNodeRef.current = null;
+    }
     setIsPlaying(false);
   };
+
+  const handleStartSleepTimer = (mins: number) => {
+    setTimerMinutes(mins);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+
+    if (mins === 0) {
+      setTimeRemaining(0);
+      return;
+    }
+
+    const totalSeconds = mins * 60;
+    setTimeRemaining(totalSeconds);
+
+    timerIntervalRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          stopSynthesizer();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const formatSleepTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // Update narrow-band filter frequency in real-time
+  useEffect(() => {
+    if (filterNodeRef.current && audioContextRef.current) {
+      filterNodeRef.current.frequency.setTargetAtTime(pitchFreq, audioContextRef.current.currentTime, 0.05);
+    }
+  }, [pitchFreq]);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, []);
 
   const handlePlayToggle = (item: any) => {
     if (activeItem?.id === item.id) {
@@ -390,6 +449,69 @@ export const SoundTherapy: React.FC = () => {
           <Headphones className="w-5 h-5 text-indigo-650" />
           <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Headphones Recommended</span>
         </div>
+      </div>
+
+      {/* Calibration & Sleep Settings */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-805 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
+        
+        {/* Left Column: Sleep Timer */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+              <Timer className="w-4 h-4 text-indigo-650" />
+              Sleep Timer
+            </h4>
+            {timeRemaining > 0 && (
+              <span className="font-mono bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 px-2.5 py-0.5 rounded text-[10px] font-bold animate-pulse">
+                {formatSleepTime(timeRemaining)} remaining
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-400">Set a timer to automatically fade out and stop the maskers when you are ready to sleep.</p>
+          <div className="flex gap-2">
+            {[0, 15, 30, 60].map(mins => (
+              <button
+                key={mins}
+                onClick={() => handleStartSleepTimer(mins)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  timerMinutes === mins
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-slate-50 dark:bg-slate-950 text-slate-655 dark:text-slate-405 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900'
+                }`}
+              >
+                {mins === 0 ? 'Off' : `${mins} mins`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Right Column: Custom Frequency Calibration */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+              <Sliders className="w-4 h-4 text-indigo-650" />
+              Dynamic Calibration
+            </h4>
+            <span className="font-mono bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 px-2.5 py-0.5 rounded text-[10px] font-bold">
+              {pitchFreq} Hz
+            </span>
+          </div>
+          <p className="text-xs text-slate-400">Fine-tune the center frequency of your Clinical Narrow-Band Masker in real-time.</p>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-slate-400 font-bold">1k Hz</span>
+            <input
+              type="range"
+              min="1000"
+              max="12000"
+              step="100"
+              value={pitchFreq}
+              onChange={(e) => setPitchFreq(parseInt(e.target.value))}
+              className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+            />
+            <span className="text-[10px] text-slate-400 font-bold">12k Hz</span>
+          </div>
+        </div>
+
       </div>
 
       {/* Grid of Sound Cards */}

@@ -12,7 +12,6 @@ import { SoundTherapy } from './pages/SoundTherapy';
 import { DailyLogs } from './pages/DailyLogs';
 import { AIChat } from './pages/AIChat';
 import { DoctorDashboard } from './pages/DoctorDashboard';
-import { SoundMasker } from './pages/SoundMasker';
 import { KnowledgeHub } from './pages/KnowledgeHub';
 import { AssessmentStudio } from './pages/AssessmentStudio';
 import { RehabilitationPlan } from './pages/RehabilitationPlan';
@@ -72,7 +71,6 @@ export const AppContent: React.FC = () => {
           <Route path="/therapy" element={<SoundTherapy />} />
           <Route path="/logs" element={<DailyLogs />} />
           <Route path="/chat" element={<AIChat />} />
-          <Route path="/masker" element={<SoundMasker />} />
           <Route path="/knowledge" element={<KnowledgeHub />} />
           <Route path="/assessment-studio" element={<AssessmentStudio />} />
           <Route path="/rehab" element={<RehabilitationPlan />} />
