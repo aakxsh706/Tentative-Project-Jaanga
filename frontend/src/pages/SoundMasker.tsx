@@ -26,6 +26,7 @@ export const SoundMasker: React.FC = () => {
   const gainNodeRef = useRef<GainNode | null>(null);
   const pitchOscRef = useRef<OscillatorNode | null>(null);
   const pitchGainRef = useRef<GainNode | null>(null);
+  const filterNodeRef = useRef<BiquadFilterNode | null>(null);
   const oceanIntervalRef = useRef<any>(null);
   const timerIntervalRef = useRef<any>(null);
 
@@ -87,7 +88,24 @@ export const SoundMasker: React.FC = () => {
     masterGain.connect(ctx.destination);
     gainNodeRef.current = masterGain;
 
-    if (soundType === 'ocean') {
+    if (soundType === 'narrow') {
+      const buffer = createNoiseBuffer(ctx, 'white');
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      noise.loop = true;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(pitchFreq, ctx.currentTime);
+      filter.Q.setValueAtTime(10.0, ctx.currentTime); // high Q = narrow band
+
+      noise.connect(filter);
+      filter.connect(masterGain);
+      noise.start();
+      noiseNodeRef.current = noise;
+      filterNodeRef.current = filter;
+
+    } else if (soundType === 'ocean') {
       // Ocean synthesis using Pink Noise with lowpass filter sweep
       const buffer = createNoiseBuffer(ctx, 'pink');
       const noise = ctx.createBufferSource();
@@ -174,6 +192,11 @@ export const SoundMasker: React.FC = () => {
       noiseNodeRef.current = null;
     }
 
+    if (filterNodeRef.current) {
+      filterNodeRef.current.disconnect();
+      filterNodeRef.current = null;
+    }
+
     if (pitchOscRef.current) {
       try { pitchOscRef.current.stop(); } catch (e) {}
       pitchOscRef.current.disconnect();
@@ -201,6 +224,9 @@ export const SoundMasker: React.FC = () => {
   useEffect(() => {
     if (pitchOscRef.current && audioCtxRef.current) {
       pitchOscRef.current.frequency.setTargetAtTime(pitchFreq, audioCtxRef.current.currentTime, 0.05);
+    }
+    if (filterNodeRef.current && audioCtxRef.current) {
+      filterNodeRef.current.frequency.setTargetAtTime(pitchFreq, audioCtxRef.current.currentTime, 0.05);
     }
   }, [pitchFreq]);
 
@@ -283,8 +309,9 @@ export const SoundMasker: React.FC = () => {
         </div>
 
         {/* Sound Type Selection */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 my-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5 my-5">
           {[
+            { id: 'narrow', name: 'Narrow Band', desc: 'Targeted frequency band' },
             { id: 'brown', name: 'Brown Noise', desc: 'Deep warm rumble' },
             { id: 'pink', name: 'Pink Noise', desc: 'Soft gentle rain' },
             { id: 'white', name: 'White Noise', desc: 'Crisp static mask' },

@@ -52,6 +52,17 @@ export const SoundTherapy: React.FC = () => {
       }
 
       const rawLibrary = libRes.data;
+      const matchedFreq = loadedAssessment?.sound_matching?.matched_frequency_hz || 6000;
+      const narrowBandItem = {
+        id: "t-narrow-band",
+        name: `Clinical Narrow-Band Masker (${matchedFreq} Hz)`,
+        category: "narrow_band",
+        description: `Highly targeted bandpass-filtered noise centered around your matched tinnitus frequency.`,
+        audio_url: "synth:narrow_band",
+        image_url: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=150",
+        isRecommended: true
+      };
+
       if (loadedAssessment && loadedAssessment.sound_matching) {
         const matchedType = loadedAssessment.sound_matching.sound_type;
         const updatedLib = rawLibrary.map((item: any) => {
@@ -67,13 +78,9 @@ export const SoundTherapy: React.FC = () => {
             isRecommended: isMatch
           };
         });
-        setLibrary(updatedLib);
-        const recommendedItem = updatedLib.find((item: any) => item.isRecommended);
-        if (recommendedItem) {
-          setActiveItem(recommendedItem);
-        } else if (updatedLib.length > 0) {
-          setActiveItem(updatedLib[0]);
-        }
+        const fullLib = [narrowBandItem, ...updatedLib];
+        setLibrary(fullLib);
+        setActiveItem(narrowBandItem); // Pre-select narrow-band as default
       } else {
         setLibrary(rawLibrary);
         if (rawLibrary.length > 0) {
@@ -151,7 +158,29 @@ export const SoundTherapy: React.FC = () => {
 
     const audioUrl = item.audio_url;
 
-    if (audioUrl === 'synth:white') {
+    if (audioUrl === 'synth:narrow_band') {
+      const bufferSize = 2 * ctx.sampleRate;
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      const noiseNode = ctx.createBufferSource();
+      noiseNode.buffer = noiseBuffer;
+      noiseNode.loop = true;
+      noiseNode.start();
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      const targetFreq = latestAssessment?.sound_matching?.matched_frequency_hz || 6000;
+      filter.frequency.setValueAtTime(targetFreq, ctx.currentTime);
+      filter.Q.setValueAtTime(8.0, ctx.currentTime); // narrow band
+
+      noiseNode.connect(filter);
+      filter.connect(gainNode);
+      sourceNodeRef.current = noiseNode;
+    }
+    else if (audioUrl === 'synth:white') {
       const bufferSize = 2 * ctx.sampleRate;
       const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
