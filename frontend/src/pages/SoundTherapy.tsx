@@ -1,6 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Play, Pause, Star, Heart, Volume2, Clock, Music, Headphones, RefreshCw } from 'lucide-react';
+import { 
+  Play, 
+  Pause, 
+  Star, 
+  Heart, 
+  Volume2, 
+  Clock, 
+  Music, 
+  Headphones, 
+  RefreshCw,
+  Ear,
+  PlusCircle,
+  Sparkles
+} from 'lucide-react';
 
 export const SoundTherapy: React.FC = () => {
   const { api } = useAuth();
@@ -10,6 +24,7 @@ export const SoundTherapy: React.FC = () => {
   const [activeItem, setActiveItem] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(50);
+  const [latestAssessment, setLatestAssessment] = useState<any>(null);
   
   // Timer tracking
   const [sessionSeconds, setSessionSeconds] = useState(0);
@@ -23,9 +38,48 @@ export const SoundTherapy: React.FC = () => {
   const fetchSounds = async () => {
     try {
       const libRes = await api.get('/api/therapy/library');
-      setLibrary(libRes.data);
       const favRes = await api.get('/api/therapy/favorites');
       setFavorites(favRes.data);
+      
+      const assessRes = await api.get('/api/assessments/latest').catch(() => null);
+      let loadedAssessment = null;
+      if (assessRes && assessRes.data) {
+        loadedAssessment = assessRes.data;
+        setLatestAssessment(assessRes.data);
+        if (assessRes.data.sound_matching?.matched_volume_db) {
+          setVolume(assessRes.data.sound_matching.matched_volume_db);
+        }
+      }
+
+      const rawLibrary = libRes.data;
+      if (loadedAssessment && loadedAssessment.sound_matching) {
+        const matchedType = loadedAssessment.sound_matching.sound_type;
+        const updatedLib = rawLibrary.map((item: any) => {
+          const isMatch = item.category === matchedType || 
+                          (item.category === 'rain' && matchedType === 'rain_sounds') || 
+                          (item.category === 'ocean' && matchedType === 'ocean_waves') ||
+                          (item.category === 'meditation' && matchedType === 'zen_meditation') ||
+                          (item.category === 'meditation' && matchedType === 'meditation') ||
+                          (item.category === 'white_noise' && matchedType === 'white_noise') ||
+                          (item.category === 'pink_noise' && matchedType === 'pink_noise');
+          return {
+            ...item,
+            isRecommended: isMatch
+          };
+        });
+        setLibrary(updatedLib);
+        const recommendedItem = updatedLib.find((item: any) => item.isRecommended);
+        if (recommendedItem) {
+          setActiveItem(recommendedItem);
+        } else if (updatedLib.length > 0) {
+          setActiveItem(updatedLib[0]);
+        }
+      } else {
+        setLibrary(rawLibrary);
+        if (rawLibrary.length > 0) {
+          setActiveItem(rawLibrary[0]);
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -263,6 +317,33 @@ export const SoundTherapy: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!latestAssessment) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl mx-auto font-sans flex flex-col items-center justify-center min-h-[calc(100vh-120px)] space-y-6">
+        <div className="w-20 h-20 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+          <Headphones className="w-10 h-10 animate-bounce" />
+        </div>
+        <div className="text-center max-w-lg space-y-3">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100">Sound Therapy Calibration Required</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            To start acoustic rehabilitation, we first need to calibrate the synthesizers. Please complete your initial 2-minute assessment so we can configure the matching frequencies and recommended volumes tailored to your ears.
+          </p>
+        </div>
+        <Link to="/assessment" className="py-3.5 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md hover-lift flex items-center gap-2 cursor-pointer">
+          <PlusCircle className="w-5 h-5" /> Calibrate Audio Matcher Now
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto font-sans flex flex-col min-h-[calc(100vh-80px)]">
       {/* Page Header */}
@@ -324,9 +405,16 @@ export const SoundTherapy: React.FC = () => {
                   className="w-14 h-14 rounded-xl object-cover border border-slate-100 dark:border-slate-800"
                 />
                 <div className="overflow-hidden">
-                  <span className="text-[9px] font-bold uppercase py-0.5 px-2 bg-slate-100 text-slate-600 rounded-md dark:bg-slate-950 dark:text-slate-400">
-                    {item.category.replace('_', ' ')}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                    <span className="text-[9px] font-bold uppercase py-0.5 px-2 bg-slate-100 text-slate-650 rounded-md dark:bg-slate-950 dark:text-slate-400">
+                      {item.category.replace('_', ' ')}
+                    </span>
+                    {item.isRecommended && (
+                      <span className="text-[9px] font-black uppercase py-0.5 px-2 bg-emerald-500 text-white rounded-md flex items-center gap-0.5 animate-pulse">
+                        <Sparkles className="w-2.5 h-2.5" /> AI Recommended
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-md font-bold text-slate-800 dark:text-slate-150 truncate mt-1">
                     {item.name}
                   </h3>

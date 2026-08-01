@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Send, 
   Bot, 
@@ -29,6 +30,7 @@ interface ChatMessage {
 
 export const AIChat: React.FC = () => {
   const navigate = useNavigate();
+  const { api } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
@@ -41,6 +43,33 @@ export const AIChat: React.FC = () => {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await api.get('/api/assessments/latest');
+        if (res.data && res.data.sound_matching) {
+          const freq = res.data.sound_matching.matched_frequency_hz;
+          const vol = res.data.sound_matching.matched_volume_db;
+          const ear = res.data.ear_selection;
+          const earText = ear === 'both' ? 'both ears' : `${ear} ear`;
+          
+          setMessages([
+            {
+              id: 1,
+              sender: 'bot',
+              text: `Hello there! I'm **Aura**, your supportive tinnitus guidance companion. I've loaded your auditory profile from your latest assessment:\n\n• **Matched Pitch**: ${freq} Hz\n• **Matched Volume**: ${vol}%\n• **Affected Side**: ${earText.charAt(0).toUpperCase() + earText.slice(1)}\n\nI'm here to answer questions about tinnitus causes, sound masking, stress relief, and exercises. Ask me anything!`,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              showDoctorNotice: true
+            }
+          ]);
+        }
+      } catch (e) {
+        console.error("Could not fetch latest assessment for chatbot:", e);
+      }
+    };
+    fetchProfile();
+  }, [api]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

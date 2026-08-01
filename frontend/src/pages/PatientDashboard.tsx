@@ -77,6 +77,33 @@ export const PatientDashboard: React.FC = () => {
 
   const totalTherapyMins = logs.reduce((sum, item) => sum + (item.therapy_minutes_used || 0), 0);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!latestAssessment) {
+    return (
+      <div className="p-6 md:p-8 max-w-4xl mx-auto font-sans flex flex-col items-center justify-center min-h-[calc(100vh-120px)] space-y-6">
+        <div className="w-20 h-20 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <Ear className="w-10 h-10 animate-pulse" />
+        </div>
+        <div className="text-center max-w-lg space-y-3">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100">Welcome to TinniCare AI</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            To begin your personalized tinnitus rehabilitation journey, we first need to establish your baseline auditory profile. Completing the initial assessment takes about 2 minutes and helps calibrate your sound therapy maskers, daily diaries, and AI clinician advice.
+          </p>
+        </div>
+        <Link to="/assessment" className="py-3.5 px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md hover-lift flex items-center gap-2 cursor-pointer">
+          <PlusCircle className="w-5 h-5" /> Start Initial Assessment
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto font-sans">
       {/* Header Banner */}
