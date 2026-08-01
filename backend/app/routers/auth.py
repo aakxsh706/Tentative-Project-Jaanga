@@ -67,6 +67,10 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
         )
         db.add(db_doctor)
     else:
+        # Get first available doctor to assign automatically
+        first_doc = db.query(Doctor).first()
+        assigned_doc_id = first_doc.id if first_doc else "doc-xavier"
+
         # Patient profile
         db_patient = Patient(
             id=db_user.id,
@@ -74,7 +78,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
             gender=user_in.gender or "",
             noise_exposure_history=user_in.noise_exposure_history or "",
             medical_conditions=user_in.medical_conditions or "",
-            assigned_doctor_id=None
+            assigned_doctor_id=assigned_doc_id
         )
         db.add(db_patient)
 
