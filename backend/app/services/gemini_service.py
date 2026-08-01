@@ -230,3 +230,32 @@ def generate_chat_response(message: str, history: List[Dict[str, str]]) -> str:
         "Engaging in sound therapy, tracking daily stress/sleep patterns, and consulting an audiologist are recommended steps. "
         "Let me know if you would like info on sound matching, coping strategies, or sleep hygiene."
     )
+
+if __name__ == "__main__":
+    print("=== Testing TinniCare AI Gemini Service ===")
+    mock_ears = "both"
+    mock_hotspots = ["helix", "eardrum"]
+    mock_frequency = 6000.0
+    mock_volume = 45.0
+    mock_sound = "white_noise"
+    mock_answers = {
+        "sleep": 4, 
+        "stress": 6, 
+        "noise_exposure": "occasionally", 
+        "concentration": "sometimes", 
+        "mood_impact": "moderate", 
+        "duration": "intermittent"
+    }
+    
+    print("\n1. Running generate_assessment_analysis()...")
+    analysis = generate_assessment_analysis(
+        mock_ears, mock_hotspots, mock_frequency, mock_volume, mock_sound, mock_answers
+    )
+    print(json.dumps(analysis, indent=2))
+    
+    print("\n2. Running generate_chat_response()...")
+    chat_response = generate_chat_response(
+        "how can I fall asleep easily when the ringing spikes at night?", 
+        [{"role": "model", "content": "Hello! I am here to help you."}]
+    )
+    print("AI Response:", chat_response)
