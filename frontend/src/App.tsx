@@ -14,6 +14,7 @@ import { AIChat } from './pages/AIChat';
 import { DoctorDashboard } from './pages/DoctorDashboard';
 import { SoundMasker } from './pages/SoundMasker';
 import { KnowledgeHub } from './pages/KnowledgeHub';
+import { AssessmentStudio } from './pages/AssessmentStudio';
 
 // Route Guard for Authenticated Users
 const PrivateRoute: React.FC<{ allowedRoles?: string[] }> = ({ allowedRoles }) => {
@@ -72,6 +73,7 @@ export const AppContent: React.FC = () => {
           <Route path="/chat" element={<AIChat />} />
           <Route path="/masker" element={<SoundMasker />} />
           <Route path="/knowledge" element={<KnowledgeHub />} />
+          <Route path="/assessment-studio" element={<AssessmentStudio />} />
         </Route>
       </Route>
 

@@ -12,7 +12,8 @@ import {
   Activity,
   HeartPulse,
   Waves,
-  BookOpen
+  BookOpen,
+  ClipboardList
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -24,6 +25,7 @@ export const Sidebar: React.FC = () => {
   const patientLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/assessment', label: 'Assessment Wizard', icon: ClipboardCheck },
+    { to: '/assessment-studio', label: 'AI Assessment Studio', icon: ClipboardList },
     { to: '/therapy', label: 'Sound Therapy', icon: Music },
     { to: '/masker', label: 'Ambient Masker', icon: Waves },
     { to: '/logs', label: 'Daily Tracking', icon: CalendarDays },
