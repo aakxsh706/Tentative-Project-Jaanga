@@ -30,6 +30,7 @@ export const PatientDashboard: React.FC = () => {
   const [latestAssessment, setLatestAssessment] = useState<any>(null);
   const [logs, setLogs] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [activeChartTab, setActiveChartTab] = useState<'symptoms' | 'therapy' | 'sleep_mood'>('symptoms');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,13 +58,13 @@ export const PatientDashboard: React.FC = () => {
 
   // Mock charts if logs list is empty
   const defaultChartData = [
-    { date: 'Mon', Intensity: 6, Stress: 7, Sleep: 6.5 },
-    { date: 'Tue', Intensity: 5, Stress: 5, Sleep: 7.2 },
-    { date: 'Wed', Intensity: 7, Stress: 8, Sleep: 5.5 },
-    { date: 'Thu', Intensity: 4, Stress: 4, Sleep: 8.0 },
-    { date: 'Fri', Intensity: 5, Stress: 6, Sleep: 7.0 },
-    { date: 'Sat', Intensity: 3, Stress: 3, Sleep: 8.5 },
-    { date: 'Sun', Intensity: 4, Stress: 4, Sleep: 7.8 }
+    { date: 'Mon', Intensity: 6, Stress: 7, Sleep: 6.5, Therapy: 20, Mood: 3 },
+    { date: 'Tue', Intensity: 5, Stress: 5, Sleep: 7.2, Therapy: 30, Mood: 4 },
+    { date: 'Wed', Intensity: 7, Stress: 8, Sleep: 5.5, Therapy: 15, Mood: 2 },
+    { date: 'Thu', Intensity: 4, Stress: 4, Sleep: 8.0, Therapy: 45, Mood: 4 },
+    { date: 'Fri', Intensity: 5, Stress: 6, Sleep: 7.0, Therapy: 0, Mood: 3 },
+    { date: 'Sat', Intensity: 3, Stress: 3, Sleep: 8.5, Therapy: 50, Mood: 5 },
+    { date: 'Sun', Intensity: 4, Stress: 4, Sleep: 7.8, Therapy: 40, Mood: 4 }
   ];
 
   const chartData = logs.length > 0 
@@ -71,7 +72,9 @@ export const PatientDashboard: React.FC = () => {
         date: log.log_date.split('-').slice(1).join('/'), // MM/DD
         Intensity: log.tinnitus_intensity,
         Stress: log.stress_level,
-        Sleep: log.sleep_hours
+        Sleep: log.sleep_hours,
+        Therapy: log.therapy_minutes_used || 0,
+        Mood: log.mood_rating
       }))
     : defaultChartData;
 
@@ -179,27 +182,79 @@ export const PatientDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Trend chart */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm lg:col-span-2 flex flex-col justify-between">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
             <div>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-150">Symptom & Stress Trends</h3>
-              <p className="text-xs text-slate-400">Tracking tinnitus intensity against daily cognitive stress levels.</p>
+              <h3 className="text-lg font-bold text-slate-850 dark:text-slate-100 font-sans">Auditory & Lifestyle Analytics</h3>
+              <p className="text-xs text-slate-400">Review clinical logs and daily habituation tracking correlations.</p>
             </div>
-            <span className="text-[10px] font-bold py-1 px-3 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400 rounded-full flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5" /> 7-Day Log
-            </span>
+            
+            {/* Chart Tab Selectors */}
+            <div className="flex gap-1.5 p-1 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/55 dark:border-slate-850 shrink-0">
+              <button
+                onClick={() => setActiveChartTab('symptoms')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeChartTab === 'symptoms'
+                    ? 'bg-indigo-650 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Symptoms
+              </button>
+              <button
+                onClick={() => setActiveChartTab('therapy')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeChartTab === 'therapy'
+                    ? 'bg-indigo-655 bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Therapy Mins
+              </button>
+              <button
+                onClick={() => setActiveChartTab('sleep_mood')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeChartTab === 'sleep_mood'
+                    ? 'bg-indigo-655 bg-indigo-600 text-white shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                }`}
+              >
+                Sleep & Mood
+              </button>
+            </div>
           </div>
 
           <div className="h-[260px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} domain={[0, 10]} tickLine={false} />
-                <Tooltip />
-                <Legend iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
-                <Line type="monotone" dataKey="Intensity" name="Tinnitus Intensity" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="Stress" name="Stress Level" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} />
-              </LineChart>
+              {activeChartTab === 'symptoms' ? (
+                <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} domain={[0, 10]} tickLine={false} />
+                  <Tooltip />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                  <Line type="monotone" dataKey="Intensity" name="Tinnitus Intensity (0-10)" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="Stress" name="Stress Level (0-10)" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} />
+                </LineChart>
+              ) : activeChartTab === 'therapy' ? (
+                <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <Tooltip />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                  <Line type="monotone" dataKey="Therapy" name="Therapy Duration (Mins)" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              ) : (
+                <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} domain={[0, 15]} tickLine={false} />
+                  <Tooltip />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 12, paddingTop: 10 }} />
+                  <Line type="monotone" dataKey="Sleep" name="Sleep Duration (Hours)" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="Mood" name="Subjective Mood (1-5)" stroke="#ec4899" strokeWidth={2.5} dot={{ r: 3 }} />
+                </LineChart>
+              )}
             </ResponsiveContainer>
           </div>
         </div>
