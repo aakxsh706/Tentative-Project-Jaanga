@@ -19,11 +19,23 @@ export const DailyLogs: React.FC = () => {
 
   // Form State
   const [intensity, setIntensity] = useState(5);
-  const [stress, setStress] = useState(5);
+  const [stress, setStress] = useState(3);
+  const [stressQ1, setStressQ1] = useState(1);
+  const [stressQ2, setStressQ2] = useState(1);
+  const [stressQ3, setStressQ3] = useState(1);
   const [sleep, setSleep] = useState(7.0);
   const [mood, setMood] = useState(3);
   const [medication, setMedication] = useState(false);
   const [notes, setNotes] = useState('');
+
+  const handleStressCalc = (q1: number, q2: number, q3: number) => {
+    setStressQ1(q1);
+    setStressQ2(q2);
+    setStressQ3(q3);
+    const sum = q1 + q2 + q3;
+    const calculated = Math.min(10, Math.round(sum * 1.11));
+    setStress(calculated);
+  };
   
   // UI status
   const [submitting, setSubmitting] = useState(false);
@@ -69,6 +81,10 @@ export const DailyLogs: React.FC = () => {
       setSuccess(true);
       fetchLogs();
       setNotes('');
+      setStressQ1(1);
+      setStressQ2(1);
+      setStressQ3(1);
+      setStress(3);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       setError(err.response?.data?.detail || "Could not log check-in.");
@@ -160,24 +176,61 @@ export const DailyLogs: React.FC = () => {
               />
             </div>
 
-            {/* Stress level */}
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                  Stress Level
+            {/* Stress level Questionnaire Calculator */}
+            <div className="space-y-3 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-150/40 dark:border-slate-850">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  Calculated Stress Index
                 </span>
-                <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                <span className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
                   {stress}/10
                 </span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                value={stress}
-                onChange={(e) => setStress(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-              />
+
+              {/* Somatic Muscle Tension */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider block">Neck/Jaw Somatic Tension</label>
+                <select
+                  value={stressQ1}
+                  onChange={(e) => handleStressCalc(parseInt(e.target.value), stressQ2, stressQ3)}
+                  className="w-full text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-350 focus:outline-none"
+                >
+                  <option value="0">0 - Relaxed / loose muscles</option>
+                  <option value="1">1 - Mild stiffness or neck ache</option>
+                  <option value="2">2 - Tight jaw clenching / moderate ache</option>
+                  <option value="3">3 - Severe somatic muscle tension</option>
+                </select>
+              </div>
+
+              {/* Mental Workload */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider block">Mental Workload & Overwhelm</label>
+                <select
+                  value={stressQ2}
+                  onChange={(e) => handleStressCalc(stressQ1, parseInt(e.target.value), stressQ3)}
+                  className="w-full text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-350 focus:outline-none"
+                >
+                  <option value="0">0 - Peaceful / clear mind</option>
+                  <option value="1">1 - Minor distraction or busy day</option>
+                  <option value="2">2 - Overwhelmed by tasks or ringing</option>
+                  <option value="3">3 - Intense anxiety / inability to focus</option>
+                </select>
+              </div>
+
+              {/* Patience / Irritability */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider block">Patience & Irritability</label>
+                <select
+                  value={stressQ3}
+                  onChange={(e) => handleStressCalc(stressQ1, stressQ2, parseInt(e.target.value))}
+                  className="w-full text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-2 text-slate-700 dark:text-slate-350 focus:outline-none"
+                >
+                  <option value="0">0 - Patient & content</option>
+                  <option value="1">1 - Slightly impatient / annoyed</option>
+                  <option value="2">2 - Easily frustrated with noise</option>
+                  <option value="3">3 - Extremely irritable / angry</option>
+                </select>
+              </div>
             </div>
 
             {/* Sleep hours */}

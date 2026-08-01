@@ -13,7 +13,8 @@ import {
   HeartPulse,
   Waves,
   BookOpen,
-  ClipboardList
+  ClipboardList,
+  Award
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -26,6 +27,7 @@ export const Sidebar: React.FC = () => {
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/assessment', label: 'Assessment Wizard', icon: ClipboardCheck },
     { to: '/assessment-studio', label: 'AI Assessment Studio', icon: ClipboardList },
+    { to: '/rehab', label: 'Rehabilitation Plan', icon: Award },
     { to: '/therapy', label: 'Sound Therapy', icon: Music },
     { to: '/masker', label: 'Ambient Masker', icon: Waves },
     { to: '/logs', label: 'Daily Tracking', icon: CalendarDays },
