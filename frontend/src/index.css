@@ -78,3 +78,10 @@ body {
   min-height: 100vh;
   width: 100%;
 }
+
+input,
+textarea,
+select {
+  color: #ffffff;
+  caret-color: #0a000000;
+}
