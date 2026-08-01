@@ -27,6 +27,7 @@ export const SoundMatcher: React.FC<SoundMatcherProps> = ({
   // Audio Context refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<AudioNode | null>(null);
+  const modulatorNodeRef = useRef<AudioNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const analyserNodeRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -55,7 +56,7 @@ export const SoundMatcher: React.FC<SoundMatcherProps> = ({
 
     // Create Analyser Node for canvas waveform visualization
     const analyserNode = ctx.createAnalyser();
-    analyserNode.fftSize = 254;
+    analyserNode.fftSize = 256;
     analyserNodeRef.current = analyserNode;
 
     // Generate Audio Source depending on soundType
@@ -83,6 +84,7 @@ export const SoundMatcher: React.FC<SoundMatcherProps> = ({
       osc.start();
       mod.start();
       sourceNodeRef.current = osc;
+      modulatorNodeRef.current = mod;
       osc.connect(gainNode);
     } else if (soundType === 'white_noise') {
       const bufferSize = 2 * ctx.sampleRate;
@@ -152,6 +154,12 @@ export const SoundMatcher: React.FC<SoundMatcherProps> = ({
         (sourceNodeRef.current as any).stop();
       } catch (e) {}
       sourceNodeRef.current = null;
+    }
+    if (modulatorNodeRef.current) {
+      try {
+        (modulatorNodeRef.current as any).stop();
+      } catch (e) {}
+      modulatorNodeRef.current = null;
     }
   };
 
